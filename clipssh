@@ -161,10 +161,10 @@ if [[ "$OSTYPE" == "darwin"* ]]; then
     fi
     PASTE_CMD="pngpaste"
 elif [[ "$OSTYPE" == "linux"* ]]; then
-    if command -v xclip &> /dev/null; then
-        PASTE_CMD="xclip -selection clipboard -target image/png -o"
-    elif command -v wl-paste &> /dev/null; then
+    if [[ -n "$WAYLAND_DISPLAY" ]] && command -v wl-paste &> /dev/null; then
         PASTE_CMD="wl-paste --type image/png"
+    elif command -v xclip &> /dev/null; then
+        PASTE_CMD="xclip -selection clipboard -target image/png -o"
     else
         error "No clipboard tool found. Install xclip or wl-clipboard"
     fi
@@ -205,10 +205,10 @@ fi
 # Copy path to clipboard
 if [[ "$OSTYPE" == "darwin"* ]]; then
     echo -n "$REMOTE_PATH" | pbcopy
+elif [[ -n "$WAYLAND_DISPLAY" ]] && command -v wl-copy &> /dev/null; then
+    echo -n "$REMOTE_PATH" | wl-copy
 elif command -v xclip &> /dev/null; then
     echo -n "$REMOTE_PATH" | xclip -selection clipboard
-elif command -v wl-copy &> /dev/null; then
-    echo -n "$REMOTE_PATH" | wl-copy
 fi
 
 success "Uploaded: $REMOTE_PATH"
