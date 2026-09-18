@@ -26,7 +26,8 @@ usage() {
     echo ""
     echo "Arguments:"
     echo "  user@host    Remote host (default: \$CLIPSSH_HOST)"
-    echo "  alias        Saved alias name (resolved from ~/.clipssh/aliases)"
+    echo "  alias        Saved alias name (resolved from ~/.clipssh/aliases,"
+    echo "               falling back to Host entries in ~/.ssh/config)"
     echo ""
     echo "Subcommands:"
     echo "  alias add <name> <user@host>  Save a host under a short name"
@@ -102,11 +103,17 @@ alias_list() {
 
 resolve_alias() {
     local name="$1"
-    [[ -f "$ALIAS_FILE" ]] || error "Alias not found: $name"
-    local match
-    match=$(grep "^${name}=" "$ALIAS_FILE" | head -n1 || true)
-    [[ -z "$match" ]] && error "Alias not found: $name"
-    echo "${match#*=}"
+    local match=""
+    if [[ -f "$ALIAS_FILE" ]]; then
+        match=$(grep "^${name}=" "$ALIAS_FILE" | head -n1 || true)
+    fi
+    # No saved alias? Fall back to the bare name so ssh can resolve it from
+    # ~/.ssh/config, which already knows the user, port and identity file.
+    if [[ -z "$match" ]]; then
+        echo "$name"
+    else
+        echo "${match#*=}"
+    fi
 }
 
 # Handle alias subcommand
